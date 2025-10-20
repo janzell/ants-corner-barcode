@@ -1,0 +1,3 @@
+python-barcode
+Pillow
+Flask
