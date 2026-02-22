@@ -127,8 +127,11 @@ def barcode_lookup():
     mode = request.args.get('mode', 'name').strip().lower()
     sku = request.args.get('sku', '').strip()
     name = request.args.get('name', '').strip()
+    selected_sku = request.args.get('selected_sku', '').strip()
 
     resolved_sku = sku
+    matches = []
+    info = None
     if mode == 'name':
         if not name:
             return render_template('index.html', error='Please enter an item name.', mode='name', name=name, sku=sku)
@@ -137,7 +140,14 @@ def barcode_lookup():
         if not matches:
             return render_template('index.html', error=f'No item name match found for: {name}', mode='name', name=name, sku=sku)
 
-        if len(matches) > 1:
+        if selected_sku:
+            valid_skus = {match['sku'] for match in matches}
+            if selected_sku not in valid_skus:
+                return render_template('index.html', error='Selected item is not in the current results.', mode='name', name=name, sku=sku, matches=matches)
+            resolved_sku = selected_sku
+            if len(matches) > 1:
+                info = f'Found {len(matches)} matches for "{name}". Click an item to open barcode.'
+        elif len(matches) > 1:
             return render_template(
                 'index.html',
                 mode='name',
@@ -146,8 +156,8 @@ def barcode_lookup():
                 matches=matches,
                 info=f'Found {len(matches)} matches for "{name}". Click an item to open barcode.'
             )
-
-        resolved_sku = matches[0]['sku']
+        else:
+            resolved_sku = matches[0]['sku']
     else:
         if not sku:
             return render_template('index.html', error='Please enter a SKU.', mode='sku', name=name, sku=sku)
@@ -156,7 +166,17 @@ def barcode_lookup():
     if not rel_image_path:
         return render_template('index.html', error=f'No barcode image found for SKU: {resolved_sku}', mode=mode, name=name, sku=sku)
 
-    return render_template('barcode.html', sku=resolved_sku, image_path=rel_image_path)
+    return render_template(
+        'index.html',
+        mode=mode,
+        name=name,
+        sku=resolved_sku,
+        matches=matches,
+        info=info,
+        modal_open=True,
+        modal_sku=resolved_sku,
+        modal_image_path=rel_image_path
+    )
 
 @app.route('/barcode_image/<path:filename>')
 def barcode_image(filename):
