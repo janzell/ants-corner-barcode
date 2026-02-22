@@ -2,28 +2,61 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Find Barcode by SKU</title>
+    <title>Find Barcode</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         body { font-family: Arial, sans-serif; background: #f7f7f7; margin: 0; padding: 0; }
         .container { max-width: 400px; margin: 60px auto; background: #fff; padding: 32px 24px 24px 24px; border-radius: 10px; box-shadow: 0 2px 12px rgba(0,0,0,0.08); }
         h1 { text-align: center; font-size: 1.6em; margin-bottom: 24px; }
         form { display: flex; flex-direction: column; gap: 12px; }
+        .mode-picker { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+        .mode-picker label { font-size: 0.95em; color: #333; display: flex; gap: 6px; align-items: center; }
         input[type="text"] { padding: 10px; font-size: 1.1em; border: 1px solid #bbb; border-radius: 5px; }
         button { padding: 10px; font-size: 1.1em; background: #0078d7; color: #fff; border: none; border-radius: 5px; cursor: pointer; transition: background 0.2s; }
         button:hover { background: #005fa3; }
+        .info { color: #0a5; margin-top: 10px; text-align: center; }
         .error { color: #b00; margin-top: 10px; text-align: center; }
+        .results { margin-top: 14px; border-top: 1px solid #e5e5e5; padding-top: 12px; }
+        .results h3 { margin: 0 0 8px 0; font-size: 1em; }
+        .results ul { margin: 0; padding-left: 18px; max-height: 260px; overflow-y: auto; }
+        .results li { margin-bottom: 6px; }
+        .results a { color: #0078d7; text-decoration: none; }
+        .results a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Find Barcode by SKU</h1>
+        <h1>Find Barcode</h1>
         <form action="/barcode" method="get">
-            <input type="text" name="sku" placeholder="Enter SKU" required autofocus>
+            <div class="mode-picker">
+                <label>
+                    <input type="radio" name="mode" value="name" {% if (mode or 'name') == 'name' %}checked{% endif %}>
+                    Search by Name
+                </label>
+                <label>
+                    <input type="radio" name="mode" value="sku" {% if (mode or 'name') == 'sku' %}checked{% endif %}>
+                    Search by SKU
+                </label>
+            </div>
+            <input type="text" name="sku" placeholder="Enter SKU" value="{{ sku or '' }}">
+            <input type="text" name="name" placeholder="Enter item name" value="{{ name or '' }}">
             <button type="submit">Search</button>
         </form>
+        {% if info %}
+        <div class="info">{{ info }}</div>
+        {% endif %}
         {% if error %}
         <div class="error">{{ error }}</div>
+        {% endif %}
+        {% if matches %}
+        <div class="results">
+            <h3>Matching items</h3>
+            <ul>
+                {% for match in matches %}
+                <li><a href="/barcode?mode=sku&sku={{ match.sku }}">{{ match.name }} (SKU {{ match.sku }})</a></li>
+                {% endfor %}
+            </ul>
+        </div>
         {% endif %}
     </div>
 </body>
